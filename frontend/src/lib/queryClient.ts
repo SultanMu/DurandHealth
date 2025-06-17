@@ -21,9 +21,9 @@ export function setAuthToken(token: string | null) {
   }
 }
 
-export function getAuthToken() {
+export function getAuthToken(): string | null {
   if (typeof window !== 'undefined') {
-    return authToken || localStorage.getItem('authToken');
+    return localStorage.getItem('authToken');
   }
   return authToken;
 }
@@ -48,9 +48,12 @@ export async function apiRequest(
   
   // Add JWT token to headers if available
   const token = getAuthToken();
+  console.log('Token being used in request:', token);
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+    console.log('Full Authorization header:', headers["Authorization"]);
   }
+  console.log('Request headers:', headers);
 
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
   console.log('Making API request to:', fullUrl);

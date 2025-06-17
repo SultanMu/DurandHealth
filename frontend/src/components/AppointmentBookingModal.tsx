@@ -67,12 +67,15 @@ export default function AppointmentBookingModal({ open, onClose }: AppointmentBo
     mutationFn: async (data: any) => {
       const appointmentData = {
         ...data,
-        date: selectedDate?.toISOString(),
+        date: selectedDate ? new Date(selectedDate.setHours(parseInt(selectedTimeSlot.split(':')[0]), parseInt(selectedTimeSlot.split(':')[1].split(' ')[0]), 0)).toISOString() : undefined,
         time: selectedTimeSlot,
         status: "scheduled",
       };
+      console.log("Submitting appointment data:", appointmentData);
       const response = await apiRequest("POST", "/api/appointments/", appointmentData);
-      return response.json();
+      const responseData = await response.json();
+      console.log("Appointment submission response:", responseData);
+      return responseData;
     },
     onSuccess: () => {
       toast({
@@ -84,6 +87,7 @@ export default function AppointmentBookingModal({ open, onClose }: AppointmentBo
       resetForm();
     },
     onError: (error: Error) => {
+      console.error("Appointment booking error:", error);
       toast({
         title: "Booking Failed",
         description: error.message,

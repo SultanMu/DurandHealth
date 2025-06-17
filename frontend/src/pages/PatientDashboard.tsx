@@ -13,6 +13,7 @@ import HealthRemindersModal from "@/components/HealthRemindersModal";
 import VirtualAssistantModal from "@/components/VirtualAssistantModal";
 import HealthTrendsChart from "@/components/HealthTrendsChart";
 import HealthReportGenerator from "@/components/HealthReportGenerator";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   ClipboardList, 
   Calendar, 
@@ -39,6 +40,17 @@ export default function PatientDashboard() {
   const [showHealthReminders, setShowHealthReminders] = useState(false);
   const [showVirtualAssistant, setShowVirtualAssistant] = useState(false);
 
+  // Fetch appointments
+  const { data: appointmentsData, isLoading: appointmentsLoading } = useQuery({
+    queryKey: ["/api/appointments"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/appointments/");
+      const data = await response.json();
+      console.log("Fetched appointments data:", data); // Debug log
+      return data;
+    },
+  });
+
   // Static demo data to prevent refresh loops
   const healthAssessments = [
     {
@@ -52,15 +64,8 @@ export default function PatientDashboard() {
     }
   ];
   
-  const appointments = [
-    {
-      id: 1,
-      appointmentType: 'General Checkup',
-      provider: 'Dr. Smith',
-      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'scheduled'
-    }
-  ];
+  const appointments = appointmentsData?.results || [];
+  console.log("Processed appointments:", appointments); // Debug log
   
   const healthGoals = [
     {
@@ -74,7 +79,6 @@ export default function PatientDashboard() {
   ];
 
   const assessmentsLoading = false;
-  const appointmentsLoading = false;
   const goalsLoading = false;
 
   const healthActivities = [
@@ -90,9 +94,18 @@ export default function PatientDashboard() {
   const activitiesLoading = false;
 
   const latestAssessment = Array.isArray(healthAssessments) ? healthAssessments[0] : null;
-  const upcomingAppointments = Array.isArray(appointments) ? appointments.filter((apt: any) => 
-    new Date(apt.appointmentDate) > new Date() && apt.status === "scheduled"
-  ) : [];
+  const upcomingAppointments = Array.isArray(appointments) ? appointments.filter((apt: any) => {
+    console.log("Checking appointment:", apt); // Debug log
+    const appointmentDate = new Date(apt.date);
+    const now = new Date();
+    console.log("Current time:", now); // Debug log
+    console.log("Appointment time:", appointmentDate); // Debug log
+    const isValid = appointmentDate > now && apt.status === "scheduled";
+    console.log("Is appointment valid?", isValid); // Debug log
+    return isValid;
+  }) : [];
+  console.log("All appointments:", appointments); // Debug log
+  console.log("Filtered upcoming appointments:", upcomingAppointments); // Debug log
 
   const handleLogout = () => {
     console.log("PatientDashboard - Logging out"); // Debug log
@@ -395,12 +408,12 @@ export default function PatientDashboard() {
                   <div>Loading appointments...</div>
                 ) : (
                   <div className="space-y-3">
-                    {upcomingAppointments.slice(0, 3).map((appointment: any) => (
+                    {upcomingAppointments.slice(0, 3).map((appointment) => (
                       <div key={appointment.id} className="group border-l-4 border-medical-blue pl-4 py-2 cursor-pointer transform transition-all duration-300 hover:border-blue-600 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-transparent hover:scale-102 hover:-translate-y-0.5 hover:shadow-md rounded-r-lg">
-                        <p className="text-sm font-medium text-gray-900 group-hover:text-blue-800 transition-colors duration-300">{appointment.serviceType}</p>
+                        <p className="text-sm font-medium text-gray-900 group-hover:text-blue-800 transition-colors duration-300">{appointment.appointmentType}</p>
                         <p className="text-xs text-gray-600 group-hover:text-blue-600 transition-colors duration-300">
-                          {new Date(appointment.appointmentDate).toLocaleDateString()} at{' '}
-                          {new Date(appointment.appointmentDate).toLocaleTimeString([], { 
+                          {new Date(appointment.date).toLocaleDateString()} at{' '}
+                          {new Date(appointment.date).toLocaleTimeString([], { 
                             hour: '2-digit', 
                             minute: '2-digit' 
                           })}

@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Login successful:', data);
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('authToken', data.access);
       toast.success('Login successful');
       setLocation("/dashboard");
     },
